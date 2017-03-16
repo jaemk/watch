@@ -1,0 +1,93 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div>
+    <h4> Active Cams </h4>
+    {% for cam in cams %}
+        <div class="jcard">
+            <div class="jcard-header">
+                {{ cam.id_name }} - {{ cam.description }}
+                <span style="font-size: small; font-weight: bold;">
+                    <a href="#" data-toggle="modal" data-target="#confirm-modal" onclick="refreshCamStatus('{{cam.id_name}}')">
+                        {% if cam.active %}
+                          Active
+                        {% else %}
+                          Disabled
+                        {% endif %}
+                    </a>
+                </span>
+            </div>
+            <div class="jcard-block">
+                <div class="d-flex">
+                    {% for snap in cam.snaps_limited %}
+                        <a target="_blank" href="{{ snap.image.url }}">
+                          <img class="thumb" src="{{snap.image.url}}"/>
+                        </a>
+                    {% endfor %}
+                </div>
+                <div style="margin-top: 10px;">
+                    <a href="#" class="btn btn-primary">See More</a>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="confirm-modal-label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="confirm-modal-label">
+                            Toggle {{ cam.id_name }}
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="is-active-msg" style="display: none;">
+                            {{ cam.id_name }} is currently active... disable it?
+                            <br/>
+                            <button type="button" class="btn btn-primary" onclick="toggleCam('{{cam.id_name}}', 'disable')">Disable</button>
+                        </div>
+                        <div id="is-disabled-msg" style="display: none;">
+                            {{ cam.id_name }} is currently disabled... activate it?
+                            <br/>
+                            <button type="button" class="btn btn-primary" onclick="toggleCam('{{cam.id_name}}', 'activate')">Activate</button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% csrf_token %}
+<script>
+    (function(){
+        var token = (function(){
+            var node = document.getElementsByName('csrfmiddlewaretoken')[0];
+            return node.value;
+        })();
+        window.refreshCamStatus = function(camIdName) {
+            $.get("/cam/status/?cam="+camIdName, function(resp) {
+                var modalMessageId = "is-disabled-msg";
+                if (resp.active) { modalMessageId = "is-active-msg"; }
+                var modalMsg = document.getElementById(modalMessageId);
+                modalMsg.style.cssText = '';
+            });
+        }
+        window.toggleCam = function(camIdName, action) {
+            $.ajax({
+                url: "/cam/toggle/",
+                type: 'post',
+                data: JSON.stringify({ action: action, cam_id_name: camIdName }),
+                contentType: 'application/json',
+                dataType: 'json',
+                headers: { 'X-CSRFToken': token },
+                success: function(data) {
+                    console.log(data);
+                    window.location.reload();
+                },
+                error: function(err) { console.log(err); }
+            });
+        };
+    })()
+</script>
+{% endblock %}

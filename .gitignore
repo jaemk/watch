@@ -1,0 +1,6 @@
+media
+.env
+__pycache__
+*.pyc
+pic.png
+settings.py
