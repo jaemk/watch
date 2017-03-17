@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'cam/toggle/$', views.ToggleCamera.as_view(), name='toggle_cam'),
     url(r'cam/status/$', views.CameraStatus.as_view(), name='cam_status'),
     url(r'upload/$', views.camera_upload, name='upload'),
+    url(r'', views.into_home, name='into_home'),
 ]

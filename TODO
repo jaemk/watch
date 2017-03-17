@@ -1,0 +1,14 @@
+- management commands:
+  - create-cam
+  - tokens --create, --delete, --list
+  - cam.corder capture & post
+
+- Add more letsencrypt certs
+- Setup auto renew
+
+- features
+  - See more...
+  - Modify time interval
+  - Request on-demand connection
+  - Daily archiving
+  - gif summary

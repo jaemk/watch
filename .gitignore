@@ -1,6 +1,11 @@
 media
-.env
+static_root
+env
 __pycache__
+
+.env
 *.pyc
 pic.png
 settings.py
+nginx.conf
+gunicorn.conf

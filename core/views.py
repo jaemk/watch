@@ -82,6 +82,10 @@ def logout(request):
     return redirect('core:home')
 
 
+def into_home(request):
+    return redirect('core:home')
+
+
 class Home(BaseView):
     def handle(self, request):
         cams = models.Cam.objects.all()
