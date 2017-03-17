@@ -8,8 +8,11 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import login as auth_login
 from django.conf import settings
 
+import os
+import pathlib
 import json
 import uuid
+import mimetypes
 
 from core import forms
 from core import models
@@ -23,7 +26,12 @@ class BaseView(View):
 
     @staticmethod
     def json_resp(content, **kwargs):
-        """For convenience... 'content' must be a dictionary"""
+        """
+        Wrapper http-resp to auto populate json params.
+
+        :param content: dict of serializable things to serialize to json
+        :param **kwargs: any additional kwargs will be passed to HttpResponse
+        """
         indent = sort_keys = None
         if settings.DEBUG:
             indent = 4
@@ -33,12 +41,22 @@ class BaseView(View):
                             **kwargs)
 
     def bouncer(self, request):
+        """
+        For supporting various authentication checks before processing the request.
+        Subclassed views can implement their own specific checks.
+        Passing checks should return a falsey value, any truthy value is
+        assumed to be an http-resp and will be returned immediately.
+        """
         if self.bouncer_allow_all:
             return
         if not request.user.is_authenticated():
             return redirect('core:login')
 
     def render(self, request, template, context=None):
+        """
+        Wrapped render to inject context values common to all subclassed views.
+        Arguments mirror the default render function.
+        """
         context = context if context is not None else {}
         default_context = {
             'user': request.user,
@@ -48,6 +66,13 @@ class BaseView(View):
         return render(request, template, context)
 
     def dispatch(self, request, *args, **kwargs):
+        """
+        Handling of requests will first invoke the current bouncer,
+        then look for a 'handle' method to process both gets & posts.
+        If no handle method is found, request processing falls through
+        to django's default behavior of looking for either a 'get' or 'post'
+        method depending on the current request.METHOD
+        """
         err_resp = self.bouncer(request)
         if err_resp:
             return err_resp
@@ -62,7 +87,6 @@ class Login(BaseView):
     bouncer_allow_all = True
     def handle(self, request):
         if request.method == 'GET':
-            # return form
             form = forms.LoginForm()
         else:
             form = forms.LoginForm(request.POST)
@@ -135,8 +159,40 @@ class ToggleCamera(BaseView):
         return self.json_resp({'ok': 'ok'})
 
 
+class SecureMedia(BaseView):
+    """
+    Uploaded files are stored under media/
+    We want to serve them directly through nginx instead of python, but also
+    need to make sure access is authorized. If we just have nginx serve directly
+    from media/, the files will be available to unauthenticated requests.
+
+    Nginx is setup with an 'internal' location named /protected/, aliased to our
+    media/ directory. All requests to /media/* urls will be routed to this view
+    where they'll be redirected to our internal /protected/ url using nginx's
+    X-Accel-Redirect header.
+    """
+    def get(self, request):
+        content_type, _encoding = mimetypes.guess_type(request.path_info)
+
+        # change /media/<filename> to /protected/<filename>
+        path = pathlib.Path(request.path_info)
+        path = os.path.join('/protected', *path.parts[2:])
+
+        resp = http_resp()
+        resp['Content-Type'] = f'{content_type}'
+        resp['X-Accel-Redirect'] = f'{path}'
+        # to invoke downloads
+        # _, filename = os.path.split(request.path_info)
+        # resp['Content-Disposition'] = f'attachment; filename={filename}'
+        return resp
+
+
 @csrf_exempt
 def camera_upload(request):
+    """
+    Endpoint for receiving camera posts. Ignore the lack of csrf tokens
+    and instead ensure a valid api-token has been sent in the post params.
+    """
     if not valid_cam_token(request):
         return BaseView.json_resp({'error': 'Invalid or missing api token!'})
     cam_id_name = request.POST.get('cam')
@@ -146,3 +202,4 @@ def camera_upload(request):
     pic = request.FILES.get('pic')
     snap = models.Snap.objects.create(cam=cam, image=pic)
     return BaseView.json_resp({'ok': 'ok'})
+
