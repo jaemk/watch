@@ -5,6 +5,7 @@ __pycache__
 
 .env
 *.pyc
+capture.sh
 pic.png
 image.jpg
 settings.py
