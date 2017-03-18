@@ -12,6 +12,7 @@ ENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(ENV_PATH)
 TOKEN = os.environ.get('TOKEN')
 HOST = os.environ.get('HOST')
+CAM = os.environ.get('CAM')
 
 
 def capture() -> str:
@@ -29,7 +30,7 @@ def capture() -> str:
 
 def accepting_uploads() -> bool:
     url = f'{HOST}/cam/status/'
-    values = {'cam': 'cam_1', 'token': TOKEN}
+    values = {'cam': CAM, 'token': TOKEN}
     r = requests.get(url, params=values)
     if r.status_code != 200:
         return
@@ -40,7 +41,7 @@ def post(fname):
     # returns request
     url = f'{HOST}/upload/'
     files = {'pic': open(fname, 'rb')}
-    values = {'cam': 'cam_1', 'token': TOKEN}
+    values = {'cam': CAM, 'token': TOKEN}
     return requests.post(url, files=files, data=values)
 
 

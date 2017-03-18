@@ -28,7 +28,7 @@ class Command(BaseCommand):
             tokens = models.Token.objects.all()
             print(' ** Current Tokens:')
             for token in tokens:
-                print(f" - ({token.cam.id_name}[{self._check(token.cam)}]) {token.name: >5}: {token.value}")
+                print(f" - ({token.cam.id_name}[{self._check(token.cam)}]) {token.name: >5}: {token.value.hex}")
             return
 
         if args['new_token_name']:
