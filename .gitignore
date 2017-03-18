@@ -6,6 +6,7 @@ __pycache__
 .env
 *.pyc
 pic.png
+image.jpg
 settings.py
 nginx.conf
 gunicorn.conf

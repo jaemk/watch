@@ -2,34 +2,28 @@
 
 import os
 import sys
+import subprocess
+
 from dotenv import load_dotenv
-from pygame import camera
-from pygame import image
 import requests
 
 
-ENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
+BASE_DIR = os.path.dirname(__file__)
+ENV_PATH = os.path.join(BASE_DIR, '.env')
 load_dotenv(ENV_PATH)
 TOKEN = os.environ.get('TOKEN')
 HOST = os.environ.get('HOST')
 CAM = os.environ.get('CAM')
 
 
-def capture() -> str:
-    camera.init()
-    camera.list_cameras()
-    cam = camera.Camera('/dev/video0', (800, 800))
-    cam.start()
-    im = cam.get_image()
-    cam.stop()
-    camera.quit()
-    f = os.path.join(os.path.dirname(__file__), 'pic.png')
-    image.save(im, f)
-    return f
+def capture():  # -> str
+    img_path = '{}/image.jpg'.format(BASE_DIR)
+    subprocess.check_call('fswebcam -r 640x480 -D 2 {}'.format(img_path).split(' '))
+    return img_path
 
 
-def accepting_uploads() -> bool:
-    url = f'{HOST}/cam/status/'
+def accepting_uploads():  # -> bool
+    url = '{}/cam/status/'.format(HOST)
     values = {'cam': CAM, 'token': TOKEN}
     r = requests.get(url, params=values)
     if r.status_code != 200:
@@ -37,9 +31,8 @@ def accepting_uploads() -> bool:
     return r.json().get('active')
 
 
-def post(fname):
-    # returns request
-    url = f'{HOST}/upload/'
+def post(fname):  # -> request-response
+    url = '{}/upload/'.format(HOST)
     files = {'pic': open(fname, 'rb')}
     values = {'cam': CAM, 'token': TOKEN}
     return requests.post(url, files=files, data=values)
@@ -52,11 +45,14 @@ def query_capture_upload():
 
 
 def main(args):
-    print(f'accepting uploads: {accepting_uploads()}')
+    acc_ups = accepting_uploads()
+    print('accepting uploads: {}'.format(acc_ups))
+    if not acc_ups:
+        return
     fname = capture()
     if args and args[0] == 'post':
         r = post(fname)
-        print(r.json())
+        print('resp -> {}'.format(r.json()))
 
 
 if __name__ == '__main__':
