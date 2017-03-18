@@ -62,6 +62,10 @@ class Token(TimeStamped):
     value = models.UUIDField(default=uuid.uuid4, editable=False)
     active = models.BooleanField(default=True)
 
+    @property
+    def token(self):
+        return self.value.hex
+
     def __repr__(self):
         return f'<Token.{self.pk}[{self.name}][{self.cam}]>'
 
