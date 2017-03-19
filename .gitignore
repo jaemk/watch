@@ -1,6 +1,7 @@
 media
 static_root
 env
+logs
 __pycache__
 
 .env
