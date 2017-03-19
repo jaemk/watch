@@ -10,8 +10,8 @@ The listening server will accept image posts from any number of clients. Clients
  * create a virtualenv under watch/cam and `pip install -r -client-requirements.txt`
  * install fswebcam, `sudo apt-get fswebcam`
  * copy `.env_copy` to `.env` and update with your host/token/cam-id-name
- * run with `sudo <PATH_TO_CLIENT_VENV>/bin/python <PATH_TO_PROJ_BASE>/cam/corder.py post`
- * put the above in a cron job
+ * copy `cam/capture_copy.sh` to `cam/capture.sh` and update `PROJ_PATHs`
+ * put the above in a cron job to run as frequently as you desire
 
 ## Server Setup
 This service is setup as a master server listening for image posts on registered cameras.
