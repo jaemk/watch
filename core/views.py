@@ -19,6 +19,11 @@ from core import models
 
 
 class BaseView(View):
+    """
+    Base View for all authenicated endpoints.
+    Subclasses can implement custom `bouncer` methods as needed
+    or override class variables `bouncer_allow_**`
+    """
     bouncer_allow_all = False
 
     def __init__(self, *args, **kwargs):
@@ -84,6 +89,9 @@ class BaseView(View):
 
 
 class Login(BaseView):
+    """
+    Validate and serve login form
+    """
     bouncer_allow_all = True
     def handle(self, request):
         if request.method == 'GET':
@@ -106,22 +114,19 @@ def logout(request):
     return redirect('core:home')
 
 
-def into_home(request):
-    return redirect('core:home')
-
-
 class Home(BaseView):
+    """
+    Default landing page
+    """
     def handle(self, request):
         cams = models.Cam.objects.all()
         return self.render(request, 'core/home.html', {'cams': cams})
 
 
-class ListImages(BaseView):
-    def get(self, request):
-        return self.render(request, 'core/home.html', {})
-
-
-def valid_cam_token(request):
+def valid_cam_token(request) -> bool:
+    """
+    Check given request for a valid camera api-token
+    """
     token = request.POST.get('token') or request.GET.get('token')
     if not token:
         return
@@ -133,6 +138,10 @@ def valid_cam_token(request):
 
 
 class CameraStatus(BaseView):
+    """
+    Endpoint to service both token holders and webpages
+    returning the current status of the request `cam` id_name
+    """
     def bouncer(self, request):
         if valid_cam_token(request):
             return
@@ -147,6 +156,9 @@ class CameraStatus(BaseView):
 
 
 class ToggleCamera(BaseView):
+    """
+    Toggle the `active` state of the given `cam_id_name`
+    """
     def post(self, request):
         data = json.loads(request.body)
         cam = data.get('cam_id_name')
